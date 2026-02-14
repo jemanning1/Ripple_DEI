@@ -875,6 +875,16 @@
                     const tagsText = cells[8]?.v || '';
                     const tags = tagsText.split(',').map(t => t.trim()).filter(t => t);
                     
+                    // Parse date - Google Sheets may send as number or formatted string
+                    let dateAdded = cells[9]?.v || new Date().toISOString().split('T')[0];
+                    if (typeof dateAdded === 'number') {
+                        // Convert Excel serial date to JavaScript date
+                        dateAdded = new Date((dateAdded - 25569) * 86400 * 1000).toISOString().split('T')[0];
+                    } else if (cells[9]?.f) {
+                        // If it's a formatted value, use that
+                        dateAdded = cells[9].f;
+                    }
+                    
                     return {
                         id: cells[0]?.v || index + 1,
                         category: cells[1]?.v || 'workplace',
@@ -888,7 +898,7 @@
                             experts: []
                         },
                         tags: tags,
-                        dateAdded: cells[9]?.v || new Date().toISOString().split('T')[0],
+                        dateAdded: dateAdded,
                         submittedBy: cells[10]?.v || 'Anonymous',
                         isNew: cells[11]?.v === 'TRUE' || cells[11]?.v === true
                     };

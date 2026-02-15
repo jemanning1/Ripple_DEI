@@ -630,9 +630,48 @@
                 to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             }
         }
+
+        /* High Contrast Mode */
+        body.high-contrast { background: #000; }
+        body.high-contrast .header { background: #000; border-bottom: 3px solid #fff; }
+        body.high-contrast .header h1, body.high-contrast .header .tagline, body.high-contrast .card-title, body.high-contrast .card-description, body.high-contrast .stat-number, body.high-contrast .stat-label, body.high-contrast .modal-title, body.high-contrast .detail-section h3, body.high-contrast .detail-section p, body.high-contrast .detail-section li, body.high-contrast .section-header, body.high-contrast .empty-state, body.high-contrast .form-group label { color: #fff; }
+        body.high-contrast .search-box, body.high-contrast .card, body.high-contrast .stat-box, body.high-contrast .modal-content, body.high-contrast .form-group input, body.high-contrast .form-group textarea, body.high-contrast .form-group select { background: #000; border: 3px solid #fff; color: #fff; }
+        body.high-contrast .tab { background: #000; border: 3px solid #fff; color: #fff; }
+        body.high-contrast .tab.active { background: #fff; color: #000; }
+        body.high-contrast .tag { background: #fff; color: #000; }
+        body.high-contrast .resource-link { background: #000; border: 2px solid #fff; color: #fff; }
+        .contrast-toggle { position: fixed; bottom: 110px; right: 24px; width: 56px; height: 56px; border-radius: 28px; background: white; border: 2px solid #667eea; cursor: pointer; z-index: 1000; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s; }
+        .contrast-toggle:hover { transform: scale(1.05); }
+        body.high-contrast .contrast-toggle { background: #000; border-color: #fff; color: #fff; }
+
+        /* Skip to Content Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+            z-index: 10000;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
+    <a href="#content" class="skip-link">Skip to main content</a>
     <div class="header">
         <div class="logo-section">
             <div style="position: relative; display: inline-block;">
@@ -646,7 +685,7 @@
             </div>
         </div>
         <p class="tagline">A DEI Knowledge Hub for the Irish Public Service and Semi-State DEI Collaboration Group</p>
-        <button onclick="openModal('aboutModal')" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); border: 2px solid #667eea; color: #667eea; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">?</button>
+        <button onclick="openModal('aboutModal')" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); border: 2px solid #667eea; color: #667eea; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" aria-label="About Ripple">?</button>
     </div>
 
     <div class="stats-container">
@@ -679,11 +718,14 @@
         <button class="tab" data-category="favorites">❤️ My Favorites</button>
     </div>
 
-    <div class="content" id="content">
+    <div class="content" id="content" role="main" aria-live="polite" aria-atomic="false">
         <!-- Content will be dynamically inserted here -->
     </div>
 
     <button class="floating-action" id="addButton" title="Create a Ripple">+</button>
+
+    <!-- High Contrast Toggle -->
+    <button class="contrast-toggle" id="contrastToggle" title="Toggle High Contrast">◐</button>
 
     <!-- Toast notification -->
     <div class="toast" id="toast"></div>
@@ -706,7 +748,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Contribute to Ripple</h2>
-                <button class="close-btn" id="closeSubmit">&times;</button>
+                <button class="close-btn" id="closeSubmit" aria-label="Close dialog">&times;</button>
             </div>
             <p style="color: #666; margin-bottom: 20px;">
                 Share a resource or ask a question to help build our collaborative DEI knowledge base. Questions will be answered by the group and both questions and resources are reviewed before appearing on the platform (typically within 1-2 weeks).
@@ -772,7 +814,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">About Ripple</h2>
-                <button class="close-btn" onclick="closeModal('aboutModal')">&times;</button>
+                <button class="close-btn" onclick="closeModal('aboutModal')" aria-label="Close dialog">&times;</button>
             </div>
             
             <div style="padding: 20px; line-height: 1.6;">
@@ -824,9 +866,6 @@
         // ============================================
         // GOOGLE SHEETS CONFIGURATION
         // ============================================
-        // Replace 'YOUR_SHEET_ID_HERE' with your actual Google Sheet ID
-        // Example: If your sheet URL is https://docs.google.com/spreadsheets/d/1ABC123xyz/edit
-        // Then your SHEET_ID is: 1ABC123xyz
         
         const GOOGLE_SHEET_ID = '11LebZb5fZ_8tdZgb82gdwYKuxBEbqkL08NONUjg2wx8';
         const SHEET_NAME = 'Published Resources';
@@ -931,6 +970,18 @@
         
         // Load resources on page load
         loadResourcesFromSheet();
+
+        // High Contrast Mode
+        const contrastToggle = document.getElementById('contrastToggle');
+        if (localStorage.getItem('highContrast') === 'true') {
+            document.body.classList.add('high-contrast');
+        }
+        contrastToggle.addEventListener('click', () => {
+            document.body.classList.toggle('high-contrast');
+            const isEnabled = document.body.classList.contains('high-contrast');
+            localStorage.setItem('highContrast', isEnabled);
+            showToast(isEnabled ? 'High contrast enabled' : 'High contrast disabled');
+        });
 
         function updateStats() {
             const resourceCount = resources.length;
@@ -1042,7 +1093,7 @@
                     <div class="card-meta">
                         ${resource.isNew ? '<span class="tag new">NEW</span>' : ''}
                         ${resource.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('')}
-                        <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${resource.id}, event)" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+                        <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${resource.id}, event)" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" aria-label="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
                             ${isFavorite ? '❤️' : '🤍'}
                         </button>
                     </div>
@@ -1073,11 +1124,11 @@
                 <div class="modal-header">
                     <h2 class="modal-title">${resource.icon} ${resource.title}</h2>
                     <div class="modal-actions">
-                        <button class="icon-btn" onclick="copyLink(${resource.id}, event)" title="Share this resource">🔗</button>
-                        <button class="icon-btn favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${resource.id}, event)" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+                        <button class="icon-btn" onclick="copyLink(${resource.id}, event)" title="Share this resource" aria-label="Share this resource">🔗</button>
+                        <button class="icon-btn favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite(${resource.id}, event)" title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}" aria-label="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
                             ${isFavorite ? '❤️' : '🤍'}
                         </button>
-                        <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+                        <button class="close-btn" onclick="closeModal('detailModal')" aria-label="Close dialog">&times;</button>
                     </div>
                 </div>
 
@@ -1146,12 +1197,31 @@
         }
 
         function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'block';
+            
+            // Focus management - move focus to modal
+            setTimeout(() => {
+                const firstButton = modal.querySelector('button, [href], input, select, textarea');
+                if (firstButton) firstButton.focus();
+            }, 100);
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
+
+        // ESC key to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (modal.style.display === 'block') {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+        });
 
         // Check for shared resource in URL
         window.addEventListener('load', () => {
@@ -1279,8 +1349,6 @@
                 e.target.style.display = 'none';
             }
         });
-
-        // Resources are loaded and rendered by loadResourcesFromSheet()
     </script>
 </body>
 </html>

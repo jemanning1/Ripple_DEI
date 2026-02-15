@@ -1063,6 +1063,18 @@
             const newResources = filtered.filter(r => r.isNew);
             const otherResources = filtered.filter(r => !r.isNew);
 
+            // Sort Recently Added by date (newest first)
+            newResources.sort((a, b) => {
+                const dateA = new Date(a.dateAdded);
+                const dateB = new Date(b.dateAdded);
+                return dateB - dateA; // Newest first
+            });
+
+            // Sort All Resources alphabetically by title
+            otherResources.sort((a, b) => {
+                return a.title.localeCompare(b.title, 'en', { sensitivity: 'base' });
+            });
+
             let html = '';
 
             // Show "Recently Added" section if there are new resources and we're in "All" view

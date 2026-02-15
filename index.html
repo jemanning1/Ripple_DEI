@@ -993,7 +993,7 @@
             const categories = new Set(resources.map(r => r.category));
             
             document.getElementById('resourceCount').textContent = resourceCount;
-            document.getElementById('contributorCount').textContent = Math.max(contributors.size, 8);
+            document.getElementById('contributorCount').textContent = contributors.size;
             document.getElementById('topicCount').textContent = categories.size;
         }
 
